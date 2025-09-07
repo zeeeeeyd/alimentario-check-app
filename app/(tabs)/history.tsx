@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { supabase, VisitorType, VISITOR_TYPES, AnyVisitor } from '@/lib/supabase';
-import { Calendar, Clock, Users, TrendingUp, Filter } from 'lucide-react-native';
+import { Calendar, Clock, Users, TrendingUp, Filter, ChevronDown, X } from 'lucide-react-native';
 
 type VisitorScan = {
   id: string;
@@ -12,21 +12,38 @@ type VisitorScan = {
   badge_downloaded: boolean;
   date: string;
   scanned_at: string;
+  scan_count?: number;
 };
 
 export default function HistoryScreen() {
   const [recentScans, setRecentScans] = useState<VisitorScan[]>([]);
+  const [filteredScans, setFilteredScans] = useState<VisitorScan[]>([]);
   const [stats, setStats] = useState({
     totalVisitors: 0,
     todayScans: 0,
     badgesDownloaded: 0,
+    totalScans: 0,
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<VisitorType | 'all'>('all');
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   useEffect(() => {
     fetchVisitorStats();
   }, []);
+
+  useEffect(() => {
+    applyFilter();
+  }, [selectedFilter, recentScans]);
+
+  const applyFilter = () => {
+    if (selectedFilter === 'all') {
+      setFilteredScans(recentScans);
+    } else {
+      setFilteredScans(recentScans.filter(scan => scan.visitor_type === selectedFilter));
+    }
+  };
 
   const fetchVisitorStats = async () => {
     try {
@@ -44,6 +61,7 @@ export default function HistoryScreen() {
       let allVisitors: VisitorScan[] = [];
       let totalCount = 0;
       let badgeCount = 0;
+      let totalScansCount = 0;
 
       for (const table of tables) {
         try {
@@ -56,6 +74,17 @@ export default function HistoryScreen() {
           if (data && !error) {
             totalCount += count || 0;
             badgeCount += data.filter(v => v.badge_downloaded).length;
+            
+            // Get scan counts for each visitor
+            for (const visitor of data) {
+              const { data: scanData } = await supabase
+                .from('visitor_scans')
+                .select('*', { count: 'exact' })
+                .eq('visitor_id', visitor.id)
+                .eq('visitor_type', table);
+              
+              totalScansCount += scanData?.length || 0;
+            }
             
             const visitorsWithType = data.map(visitor => ({
               ...visitor,
@@ -83,6 +112,7 @@ export default function HistoryScreen() {
         totalVisitors: totalCount,
         todayScans: todayCount,
         badgesDownloaded: badgeCount,
+        totalScans: totalScansCount,
       });
     } catch (error) {
       console.error('Error fetching visitor stats:', error);
@@ -123,6 +153,11 @@ export default function HistoryScreen() {
     });
   };
 
+  const getFilterLabel = () => {
+    if (selectedFilter === 'all') return 'All Visitors';
+    return VISITOR_TYPES[selectedFilter];
+  };
+
   const renderVisitorItem = ({ item: visitor }: { item: VisitorScan }) => (
     <View style={styles.visitorItem}>
       <View style={styles.userInfo}>
@@ -154,12 +189,16 @@ export default function HistoryScreen() {
     );
   }
 
-  if (recentScans.length === 0) {
+  if (filteredScans.length === 0) {
     return (
       <View style={styles.centerContainer}>
         <Calendar size={64} color="#D1D5DB" />
-        <Text style={styles.emptyTitle}>No visitors yet</Text>
-        <Text style={styles.emptyText}>Registered visitors will appear here</Text>
+        <Text style={styles.emptyTitle}>
+          {selectedFilter === 'all' ? 'No visitors yet' : `No ${getFilterLabel().toLowerCase()} found`}
+        </Text>
+        <Text style={styles.emptyText}>
+          {selectedFilter === 'all' ? 'Registered visitors will appear here' : 'Try selecting a different filter'}
+        </Text>
       </View>
     );
   }
@@ -172,29 +211,45 @@ export default function HistoryScreen() {
         {/* Stats Cards */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Users size={24} color="#3B82F6" />
+            <Users size={20} color="#16A34A" />
             <Text style={styles.statNumber}>{stats.totalVisitors}</Text>
             <Text style={styles.statLabel}>Total Visitors</Text>
           </View>
           
           <View style={styles.statCard}>
-            <TrendingUp size={24} color="#10B981" />
+            <TrendingUp size={20} color="#EA580C" />
             <Text style={styles.statNumber}>{stats.todayScans}</Text>
             <Text style={styles.statLabel}>Today</Text>
           </View>
           
           <View style={styles.statCard}>
-            <Calendar size={24} color="#F59E0B" />
+            <Calendar size={20} color="#16A34A" />
             <Text style={styles.statNumber}>{stats.badgesDownloaded}</Text>
             <Text style={styles.statLabel}>Downloaded</Text>
+          </View>
+          
+          <View style={styles.statCard}>
+            <Clock size={20} color="#EA580C" />
+            <Text style={styles.statNumber}>{stats.totalScans}</Text>
+            <Text style={styles.statLabel}>Total Scans</Text>
           </View>
         </View>
       </View>
       
-      <Text style={styles.sectionTitle}>Recent Registrations</Text>
+      <View style={styles.filterSection}>
+        <Text style={styles.sectionTitle}>Recent Registrations</Text>
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowFilterModal(true)}
+        >
+          <Filter size={16} color="#16A34A" />
+          <Text style={styles.filterButtonText}>{getFilterLabel()}</Text>
+          <ChevronDown size={16} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
       
       <FlatList
-        data={recentScans}
+        data={filteredScans}
         keyExtractor={(item) => `${item.visitor_type}-${item.id}`}
         renderItem={renderVisitorItem}
         refreshControl={
@@ -203,6 +258,69 @@ export default function HistoryScreen() {
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
+
+      {/* Filter Modal */}
+      <Modal
+        visible={showFilterModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filter by Visitor Type</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowFilterModal(false)}
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.filterList}>
+              <TouchableOpacity
+                style={[
+                  styles.filterOption,
+                  selectedFilter === 'all' && styles.selectedFilterOption
+                ]}
+                onPress={() => {
+                  setSelectedFilter('all');
+                  setShowFilterModal(false);
+                }}
+              >
+                <Text style={[
+                  styles.filterOptionText,
+                  selectedFilter === 'all' && styles.selectedFilterOptionText
+                ]}>
+                  All Visitors
+                </Text>
+              </TouchableOpacity>
+              
+              {Object.entries(VISITOR_TYPES).map(([key, label]) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.filterOption,
+                    selectedFilter === key && styles.selectedFilterOption
+                  ]}
+                  onPress={() => {
+                    setSelectedFilter(key as VisitorType);
+                    setShowFilterModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.filterOptionText,
+                    selectedFilter === key && styles.selectedFilterOptionText
+                  ]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -228,10 +346,12 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   statCard: {
     flex: 1,
+    minWidth: '45%',
     backgroundColor: '#F8FAFC',
     padding: 16,
     borderRadius: 12,
@@ -250,12 +370,33 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 4,
   },
+  filterSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 6,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
   },
   centerContainer: {
     flex: 1,
@@ -312,7 +453,7 @@ const styles = StyleSheet.create({
   },
   visitorType: {
     fontSize: 12,
-    color: '#3B82F6',
+    color: '#16A34A',
     marginTop: 2,
     fontWeight: '500',
   },
@@ -336,14 +477,71 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   downloaded: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#DCFCE7',
   },
   pending: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FED7AA',
   },
   badgeStatusText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#374151',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterList: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  filterOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  selectedFilterOption: {
+    backgroundColor: '#16A34A',
+    borderColor: '#16A34A',
+  },
+  filterOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  selectedFilterOptionText: {
+    color: '#FFFFFF',
   },
 });

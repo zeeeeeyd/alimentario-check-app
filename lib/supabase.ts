@@ -136,8 +136,23 @@ export const VISITOR_TYPES = {
   vip: 'VIP'
 } as const;
 
+export type VisitorScan = {
+  id: string;
+  visitor_id: string;
+  visitor_type: VisitorType;
+  scanned_at: string;
+  scan_date: string;
+  created_at: string;
+};
+
+export type VisitorWithScans = VisitorWithType & {
+  total_scans: number;
+  today_scans: number;
+  last_scan: string;
+};
+
 // Function to search for a visitor across all tables
-export async function findVisitorByQRCode(qrCode: string): Promise<VisitorWithType | null> {
+export async function findVisitorByQRCode(qrCode: string): Promise<VisitorWithScans | null> {
   const tables: VisitorType[] = [
     'visitors',
     'professional_visitors', 
@@ -158,11 +173,27 @@ export async function findVisitorByQRCode(qrCode: string): Promise<VisitorWithTy
         .single();
 
       if (data && !error) {
+        // Get scan statistics for this visitor
+        const { data: scanStats } = await supabase
+          .from('visitor_scans')
+          .select('*')
+          .eq('visitor_id', data.id)
+          .eq('visitor_type', table);
+
+        const today = new Date().toISOString().split('T')[0];
+        const todayScans = scanStats?.filter(scan => scan.scan_date === today).length || 0;
+        const totalScans = scanStats?.length || 0;
+        const lastScan = scanStats?.length > 0 ? scanStats[scanStats.length - 1].scanned_at : '';
+
+        // Record this scan
+        await recordVisitorScan(data.id, table);
+
         return {
           ...data,
           visitor_type: table,
-          scan_count: 1,
-          last_scanned: new Date().toISOString()
+          total_scans: totalScans + 1,
+          today_scans: todayScans + 1,
+          last_scan: new Date().toISOString()
         };
       }
     } catch (error) {
@@ -172,6 +203,58 @@ export async function findVisitorByQRCode(qrCode: string): Promise<VisitorWithTy
   }
 
   return null;
+}
+
+// Function to record a visitor scan
+export async function recordVisitorScan(visitorId: string, visitorType: VisitorType): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('visitor_scans')
+      .insert({
+        visitor_id: visitorId,
+        visitor_type: visitorType,
+        scanned_at: new Date().toISOString(),
+        scan_date: new Date().toISOString().split('T')[0]
+      });
+
+    return !error;
+  } catch (error) {
+    console.error('Error recording visitor scan:', error);
+    return false;
+  }
+}
+
+// Function to get visitor scan statistics
+export async function getVisitorScanStats(visitorId: string, visitorType: VisitorType) {
+  try {
+    const { data, error } = await supabase
+      .from('visitor_scans')
+      .select('*')
+      .eq('visitor_id', visitorId)
+      .eq('visitor_type', visitorType)
+      .order('scanned_at', { ascending: false });
+
+    if (error) return { total: 0, today: 0, byDate: {} };
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayScans = data.filter(scan => scan.scan_date === today).length;
+    
+    // Group scans by date
+    const byDate = data.reduce((acc, scan) => {
+      const date = scan.scan_date;
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      total: data.length,
+      today: todayScans,
+      byDate
+    };
+  } catch (error) {
+    console.error('Error getting scan stats:', error);
+    return { total: 0, today: 0, byDate: {} };
+  }
 }
 
 // Function to update badge download status
@@ -187,4 +270,4 @@ export async function updateBadgeDownloaded(visitorType: VisitorType, id: string
     console.error('Error updating badge status:', error);
     return false;
   }
-};
+}

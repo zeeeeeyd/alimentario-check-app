@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, Dimensions, Modal, ScrollView } from 'react-native';
 import { Camera, CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { findVisitorByQRCode, VisitorWithType, VISITOR_TYPES, VisitorType } from '@/lib/supabase';
+import { findVisitorByQRCode, VisitorWithScans, VISITOR_TYPES, VisitorType } from '@/lib/supabase';
 import { UserInfoCard } from '@/components/UserInfoCard';
 import { ScannerOverlay } from '@/components/ScannerOverlay';
 import { Scan, RotateCcw, Users, ChevronDown } from 'lucide-react-native';
@@ -12,7 +12,7 @@ export default function ScannerScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedData, setScannedData] = useState<string | null>(null);
-  const [visitorInfo, setVisitorInfo] = useState<VisitorWithType | null>(null);
+  const [visitorInfo, setVisitorInfo] = useState<VisitorWithScans | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [scannerActive, setScannerActive] = useState(true);
   const [selectedVisitorType, setSelectedVisitorType] = useState<VisitorType>('visitors');
@@ -58,7 +58,9 @@ export default function ScannerScreen() {
           badge_downloaded: false,
           created_at: '',
           visitor_type: selectedVisitorType,
-          scan_count: 0,
+          total_scans: 0,
+          today_scans: 0,
+          last_scan: '',
         });
       }
     } catch (error) {
@@ -101,7 +103,7 @@ export default function ScannerScreen() {
           style={styles.typeSelector}
           onPress={() => setShowTypeSelector(true)}
         >
-          <Users size={20} color="#3B82F6" />
+          <Users size={20} color="#16A34A" />
           <Text style={styles.typeSelectorText}>
             {VISITOR_TYPES[selectedVisitorType]}
           </Text>
@@ -130,7 +132,7 @@ export default function ScannerScreen() {
       </CameraView>
 
       <View style={styles.footer}>
-        <Scan size={32} color="#3B82F6" />
+        <Scan size={32} color="#16A34A" />
         <Text style={styles.footerText}>
           {isProcessing ? 'Processing...' : 'Align QR code within the frame'}
         </Text>
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   permissionButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#16A34A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -304,8 +306,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   selectedTypeOption: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
+    backgroundColor: '#16A34A',
+    borderColor: '#16A34A',
   },
   typeOptionText: {
     fontSize: 16,

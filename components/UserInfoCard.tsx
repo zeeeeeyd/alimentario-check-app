@@ -1,18 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { VisitorWithType, VISITOR_TYPES, updateBadgeDownloaded } from '@/lib/supabase';
-import { X, User, Mail, Phone, Calendar, Building, MapPin, Badge, Download } from 'lucide-react-native';
+import { VisitorWithScans, VISITOR_TYPES, updateBadgeDownloaded, getVisitorScanStats } from '@/lib/supabase';
+import { X, User, Mail, Phone, Calendar, Building, MapPin, Badge, Download, BarChart3, Clock } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
 interface UserInfoCardProps {
-  visitor: VisitorWithType;
+  visitor: VisitorWithScans;
   onClose: () => void;
 }
 
 export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
   const isNewUser = visitor.id === 'new';
   const [badgeDownloaded, setBadgeDownloaded] = React.useState(visitor.badge_downloaded);
+  const [scanStats, setScanStats] = React.useState<{ total: number; today: number; byDate: Record<string, number> }>({ total: 0, today: 0, byDate: {} });
   const scaleAnim = new Animated.Value(0);
 
   React.useEffect(() => {
@@ -22,7 +23,18 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
       tension: 100,
       friction: 8,
     }).start();
+
+    // Load scan statistics for existing users
+    if (!isNewUser) {
+      loadScanStats();
+    }
   }, []);
+
+  const loadScanStats = async () => {
+    if (isNewUser) return;
+    const stats = await getVisitorScanStats(visitor.id, visitor.visitor_type);
+    setScanStats(stats);
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -121,6 +133,47 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
         </View>
 
         <View style={styles.content}>
+          {!isNewUser && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Scan Statistics</Text>
+              
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <BarChart3 size={20} color="#16A34A" />
+                  <Text style={styles.statNumber}>{visitor.total_scans}</Text>
+                  <Text style={styles.statLabel}>Total Scans</Text>
+                </View>
+                
+                <View style={styles.statItem}>
+                  <Clock size={20} color="#EA580C" />
+                  <Text style={styles.statNumber}>{visitor.today_scans}</Text>
+                  <Text style={styles.statLabel}>Today</Text>
+                </View>
+              </View>
+
+              {Object.keys(scanStats.byDate).length > 0 && (
+                <View style={styles.dailyStats}>
+                  <Text style={styles.dailyStatsTitle}>Daily Scan History</Text>
+                  {Object.entries(scanStats.byDate)
+                    .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+                    .slice(0, 5)
+                    .map(([date, count]) => (
+                      <View key={date} style={styles.dailyStatRow}>
+                        <Text style={styles.dailyStatDate}>
+                          {new Date(date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </Text>
+                        <Text style={styles.dailyStatCount}>{count} scans</Text>
+                      </View>
+                    ))}
+                </View>
+              )}
+            </View>
+          )}
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Visitor Information</Text>
             
@@ -253,10 +306,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
   },
   existingUserHeader: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#16A34A',
   },
   newUserHeader: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#EA580C',
   },
   avatar: {
     width: 80,
@@ -267,10 +320,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   existingUserAvatar: {
-    backgroundColor: '#1D4ED8',
+    backgroundColor: '#15803D',
   },
   newUserAvatar: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#C2410C',
   },
   headerTitle: {
     fontSize: 20,
@@ -294,6 +347,59 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
     marginBottom: 16,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  statItem: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  dailyStats: {
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  dailyStatsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  dailyStatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  dailyStatDate: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  dailyStatCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#16A34A',
   },
   infoRow: {
     flexDirection: 'row',
@@ -332,10 +438,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   downloadedStatus: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#16A34A',
   },
   pendingStatus: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#EA580C',
   },
   statusText: {
     color: '#FFFFFF',
@@ -343,15 +449,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   newUserPrompt: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FED7AA',
     padding: 16,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#EF4444',
+    borderLeftColor: '#EA580C',
   },
   newUserText: {
     fontSize: 14,
-    color: '#991B1B',
+    color: '#9A3412',
     lineHeight: 20,
   },
   buttonContainer: {
@@ -360,7 +466,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   downloadButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#16A34A',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -374,7 +480,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   continueButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#EA580C',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

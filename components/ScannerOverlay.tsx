@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 30,
     height: 30,
-    borderColor: '#3B82F6',
+    borderColor: '#16A34A',
     borderWidth: 4,
   },
   topLeft: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#16A34A',
     opacity: 0.8,
     borderRadius: 2,
   },
