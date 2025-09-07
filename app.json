@@ -4,13 +4,13 @@
     "slug": "bolt-expo-nativewind",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1733694515/alimentario/Fichier_72_ixjar7.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1733694515/alimentario/Fichier_72_ixjar7.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#16A34A"
     },
     "newArchEnabled": true,
     "ios": {
@@ -19,7 +19,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1733694515/alimentario/Fichier_72_ixjar7.png"
     },
     "plugins": ["expo-router", "expo-font", "expo-web-browser"],
     "experiments": {
