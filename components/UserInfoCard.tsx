@@ -132,7 +132,7 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
           </Text>
         </View>
 
-        <View style={styles.content}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {!isNewUser && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Scan Statistics</Text>
@@ -246,7 +246,7 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
               </View>
             </View>
           )}
-        </View>
+        </ScrollView>
 
         <View style={styles.buttonContainer}>
           {!isNewUser && !badgeDownloaded && (
