@@ -18,6 +18,13 @@ export default function ScannerScreen() {
   const [selectedVisitorType, setSelectedVisitorType] = useState<VisitorType>('visitors');
   const [showTypeSelector, setShowTypeSelector] = useState(false);
 
+  const didCancelRef = React.useRef(false);
+
+  React.useEffect(() => {
+    return () => {
+      didCancelRef.current = true;
+    };
+  }, []);
   if (!permission) {
     return <View style={styles.container} />;
   }
@@ -36,18 +43,20 @@ export default function ScannerScreen() {
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (isProcessing || !scannerActive) return;
     
-    setIsProcessing(true);
-    setScannerActive(false);
-    setScannedData(data);
+    if (!didCancelRef.current) {
+      setIsProcessing(true);
+      setScannerActive(false);
+      setScannedData(data);
+    }
 
     try {
       // Search for visitor across all tables
       const visitor = await findVisitorByQRCode(data);
       
-      if (visitor) {
+      if (visitor && !didCancelRef.current) {
         // Visitor found - display their information
         setVisitorInfo(visitor);
-      } else {
+      } else if (!didCancelRef.current) {
         // Visitor not found - show as new/unregistered
         setVisitorInfo({
           id: 'new',
@@ -66,16 +75,22 @@ export default function ScannerScreen() {
     } catch (error) {
       console.error('Error processing QR code:', error);
       Alert.alert('Error', 'Failed to process QR code. Please try again.');
-      resetScanner();
+      if (!didCancelRef.current) {
+        resetScanner();
+      }
     } finally {
-      setIsProcessing(false);
+      if (!didCancelRef.current) {
+        setIsProcessing(false);
+      }
     }
   };
 
   const resetScanner = () => {
-    setScannedData(null);
-    setVisitorInfo(null);
-    setScannerActive(true);
+    if (!didCancelRef.current) {
+      setScannedData(null);
+      setVisitorInfo(null);
+      setScannerActive(true);
+    }
   };
 
   const toggleCameraFacing = () => {
@@ -83,8 +98,10 @@ export default function ScannerScreen() {
   };
 
   const selectVisitorType = (type: VisitorType) => {
-    setSelectedVisitorType(type);
-    setShowTypeSelector(false);
+    if (!didCancelRef.current) {
+      setSelectedVisitorType(type);
+      setShowTypeSelector(false);
+    }
   };
 
   if (visitorInfo) {

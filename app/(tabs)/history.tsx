@@ -29,6 +29,13 @@ export default function HistoryScreen() {
   const [selectedFilter, setSelectedFilter] = useState<VisitorType | 'all'>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
+  const didCancelRef = React.useRef(false);
+
+  React.useEffect(() => {
+    return () => {
+      didCancelRef.current = true;
+    };
+  }, []);
   useEffect(() => {
     fetchVisitorStats();
   }, []);
@@ -107,24 +114,30 @@ export default function HistoryScreen() {
       const today = new Date().toDateString();
       const todayCount = allVisitors.filter(v => v.date === today).length;
       
-      setRecentScans(allVisitors.slice(0, 50));
-      setStats({
-        totalVisitors: totalCount,
-        todayScans: todayCount,
-        badgesDownloaded: badgeCount,
-        totalScans: totalScansCount,
-      });
+      if (!didCancelRef.current) {
+        setRecentScans(allVisitors.slice(0, 50));
+        setStats({
+          totalVisitors: totalCount,
+          todayScans: todayCount,
+          badgesDownloaded: badgeCount,
+          totalScans: totalScansCount,
+        });
+      }
     } catch (error) {
       console.error('Error fetching visitor stats:', error);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!didCancelRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchVisitorStats();
+    if (!didCancelRef.current) {
+      setRefreshing(true);
+      fetchVisitorStats();
+    }
   };
 
   const formatDate = (dateString: string) => {

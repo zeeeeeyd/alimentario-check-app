@@ -16,7 +16,13 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
   const [scanStats, setScanStats] = React.useState<{ total: number; today: number; byDate: Record<string, number> }>({ total: 0, today: 0, byDate: {} });
   const scaleAnim = new Animated.Value(0);
 
+  const didCancelRef = React.useRef(false);
+
   React.useEffect(() => {
+    const cleanup = () => {
+      didCancelRef.current = true;
+    };
+
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
@@ -28,12 +34,16 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
     if (!isNewUser) {
       loadScanStats();
     }
+
+    return cleanup;
   }, []);
 
   const loadScanStats = async () => {
     if (isNewUser) return;
     const stats = await getVisitorScanStats(visitor.id, visitor.visitor_type);
-    setScanStats(stats);
+    if (!didCancelRef.current) {
+      setScanStats(stats);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -50,7 +60,7 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
     if (isNewUser || badgeDownloaded) return;
     
     const success = await updateBadgeDownloaded(visitor.visitor_type, visitor.id);
-    if (success) {
+    if (success && !didCancelRef.current) {
       setBadgeDownloaded(true);
     }
   };
