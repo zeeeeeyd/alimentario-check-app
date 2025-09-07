@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { VisitorWithScans, VISITOR_TYPES, updateBadgeDownloaded, getVisitorScanStats } from '@/lib/supabase';
-import { X, User, Mail, Phone, Calendar, Building, MapPin, Badge, Download, BarChart3, Clock } from 'lucide-react-native';
+import { X, User, Mail, Phone, Calendar, Building, MapPin, Badge, Download, ChartBar as BarChart3, Clock } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
