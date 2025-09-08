@@ -140,6 +140,7 @@ export type VisitorScan = {
   id: string;
   visitor_id: string;
   visitor_type: VisitorType;
+  visitor_name: string;
   scanned_at: string;
   scan_date: string;
   created_at: string;
@@ -186,7 +187,7 @@ export async function findVisitorByQRCode(qrCode: string): Promise<VisitorWithSc
         const lastScan = scanStats?.length > 0 ? scanStats[scanStats.length - 1].scanned_at : '';
 
         // Record this scan
-        await recordVisitorScan(data.id, table);
+        await recordVisitorScan(data.id, table, data.full_name);
 
         return {
           ...data,
@@ -206,13 +207,14 @@ export async function findVisitorByQRCode(qrCode: string): Promise<VisitorWithSc
 }
 
 // Function to record a visitor scan
-export async function recordVisitorScan(visitorId: string, visitorType: VisitorType): Promise<boolean> {
+export async function recordVisitorScan(visitorId: string, visitorType: VisitorType, visitorName: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('visitor_scans')
       .insert({
         visitor_id: visitorId,
         visitor_type: visitorType,
+        visitor_name: visitorName,
         scanned_at: new Date().toISOString(),
         scan_date: new Date().toISOString().split('T')[0]
       });
