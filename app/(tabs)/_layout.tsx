@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Camera, History } from 'lucide-react-native';
+import { Camera, History, BarChart3 } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -37,6 +37,15 @@ export default function TabLayout() {
           title: 'History',
           tabBarIcon: ({ size, color }) => (
             <History size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="recap"
+        options={{
+          title: 'Recap',
+          tabBarIcon: ({ size, color }) => (
+            <BarChart3 size={size} color={color} />
           ),
         }}
       />
