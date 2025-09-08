@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Animated } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase, VISITOR_TYPES, VisitorType } from '@/lib/supabase';
 import { Calendar, TrendingUp, Users, Eye, Building, Newspaper, Crown, UserCheck, ChevronDown } from 'lucide-react-native';
@@ -98,7 +98,7 @@ export default function RecapScreen() {
   };
 
   const onDateChange = (event: any, date?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    setShowDatePicker(false);
     if (date && !didCancelRef.current) {
       setSelectedDate(date);
     }
@@ -159,10 +159,85 @@ export default function RecapScreen() {
     }
   };
 
+  const SkeletonLoader = () => {
+    const animatedValue = new Animated.Value(0);
+
+    React.useEffect(() => {
+      const animate = () => {
+        Animated.sequence([
+          Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animatedValue, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]).start(animate);
+      };
+      animate();
+    }, []);
+
+    const opacity = animatedValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.3, 0.7],
+    });
+
+    return (
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Skeleton Total Card */}
+        <Animated.View style={[styles.totalCard, { opacity }]}>
+          <View style={styles.totalCardHeader}>
+            <View style={styles.skeletonIcon} />
+            <View style={styles.totalCardContent}>
+              <View style={styles.skeletonTotalNumber} />
+              <View style={styles.skeletonTotalLabel} />
+            </View>
+          </View>
+          <View style={styles.skeletonDate} />
+        </Animated.View>
+
+        {/* Skeleton Stats Section */}
+        <View style={styles.statsSection}>
+          <View style={styles.skeletonSectionTitle} />
+          
+          <View style={styles.statsGrid}>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Animated.View key={index} style={[styles.statCard, { opacity }]}>
+                <View style={styles.skeletonStatIcon} />
+                <View style={styles.skeletonStatNumber} />
+                <View style={styles.skeletonStatLabel} />
+              </Animated.View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    );
+  };
+
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.loadingText}>Loading statistics...</Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Daily Recap</Text>
+          <Text style={styles.headerSubtitle}>View scan statistics by date</Text>
+        </View>
+
+        {/* Date Picker Section */}
+        <View style={styles.dateSection}>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Calendar size={20} color="#16A34A" />
+            <Text style={styles.dateButtonText}>{formatDate(selectedDate)}</Text>
+            <ChevronDown size={20} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
+
+        <SkeletonLoader />
       </View>
     );
   }
@@ -484,5 +559,58 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  // Skeleton styles
+  skeletonIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E5E7EB',
+  },
+  skeletonTotalNumber: {
+    width: 80,
+    height: 36,
+    borderRadius: 6,
+    backgroundColor: '#E5E7EB',
+  },
+  skeletonTotalLabel: {
+    width: 100,
+    height: 16,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginTop: 4,
+  },
+  skeletonDate: {
+    width: 120,
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+  },
+  skeletonSectionTitle: {
+    width: 180,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 16,
+  },
+  skeletonStatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 12,
+  },
+  skeletonStatNumber: {
+    width: 40,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 4,
+  },
+  skeletonStatLabel: {
+    width: 60,
+    height: 12,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
   },
 });
