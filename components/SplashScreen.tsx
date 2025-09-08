@@ -8,7 +8,7 @@ export function CustomSplashScreen() {
     <View style={styles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={{ uri: 'https://res.cloudinary.com/dxn9h9afz/image/upload/v1733694515/alimentario/Fichier_72_ixjar7.png' }}
+          source={{ uri: 'https://res.cloudinary.com/dxn9h9afz/image/upload/v1738239252/alimentario/WhatsApp_Image_2025-01-30_at_13.12.59_0d05ac7c_iu17hi.jpg' }}
           style={styles.logo}
           resizeMode="contain"
         />

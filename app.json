@@ -4,11 +4,11 @@
     "slug": "bolt-expo-nativewind",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1733694515/alimentario/Fichier_72_ixjar7.png",
+    "icon": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1738239252/alimentario/WhatsApp_Image_2025-01-30_at_13.12.59_0d05ac7c_iu17hi.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1733694515/alimentario/Fichier_72_ixjar7.png",
+      "image": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1738239252/alimentario/WhatsApp_Image_2025-01-30_at_13.12.59_0d05ac7c_iu17hi.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#16A34A"
     },
@@ -19,7 +19,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1733694515/alimentario/Fichier_72_ixjar7.png"
+      "favicon": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1738239252/alimentario/WhatsApp_Image_2025-01-30_at_13.12.59_0d05ac7c_iu17hi.jpg"
     },
     "plugins": ["expo-router", "expo-font", "expo-web-browser"],
     "experiments": {
