@@ -78,7 +78,10 @@ export default function RecapScreen() {
 
           if (!error && data) {
             stats[visitorType] = data.length;
-            stats.total += data.length;
+            // Only count normal visitors and professional visitors in total
+            if (visitorType === 'visitors' || visitorType === 'professional_visitors') {
+              stats.total += data.length;
+            }
           }
         } catch (error) {
           console.error(`Error fetching ${visitorType} stats:`, error);
