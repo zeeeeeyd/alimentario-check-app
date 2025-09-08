@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { Animated } from 'react-native';
 import { supabase, VisitorType, VISITOR_TYPES, AnyVisitor } from '@/lib/supabase';
 import { Calendar, Clock, Users, TrendingUp, Filter, ChevronDown, X } from 'lucide-react-native';
 
@@ -79,7 +80,10 @@ export default function HistoryScreen() {
             .limit(20);
 
           if (data && !error) {
-            totalCount += count || 0;
+            // Only count normal and professional visitors in total
+            if (table === 'visitors' || table === 'professional_visitors') {
+              totalCount += count || 0;
+            }
             badgeCount += data.filter(v => v.badge_downloaded).length;
             
             // Get scan counts for each visitor
@@ -171,6 +175,74 @@ export default function HistoryScreen() {
     return VISITOR_TYPES[selectedFilter];
   };
 
+  const SkeletonLoader = () => {
+    const animatedValue = new Animated.Value(0);
+
+    React.useEffect(() => {
+      const animate = () => {
+        Animated.sequence([
+          Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animatedValue, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]).start(animate);
+      };
+      animate();
+    }, []);
+
+    const opacity = animatedValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.3, 0.7],
+    });
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.skeletonHeaderTitle} />
+          
+          {/* Skeleton Stats Cards */}
+          <View style={styles.statsContainer}>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Animated.View key={index} style={[styles.statCard, { opacity }]}>
+                <View style={styles.skeletonStatIcon} />
+                <View style={styles.skeletonStatNumber} />
+                <View style={styles.skeletonStatLabel} />
+              </Animated.View>
+            ))}
+          </View>
+        </View>
+        
+        <View style={styles.filterSection}>
+          <View style={styles.skeletonSectionTitle} />
+          <Animated.View style={[styles.filterButton, { opacity }]}>
+            <View style={styles.skeletonFilterText} />
+          </Animated.View>
+        </View>
+        
+        <View style={styles.listContainer}>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Animated.View key={index} style={[styles.visitorItem, { opacity }]}>
+              <View style={styles.userInfo}>
+                <View style={styles.skeletonUserName} />
+                <View style={styles.skeletonUserEmail} />
+                <View style={styles.skeletonVisitorType} />
+              </View>
+              <View style={styles.visitorStats}>
+                <View style={styles.skeletonStatRow} />
+                <View style={styles.skeletonBadgeStatus} />
+              </View>
+            </Animated.View>
+          ))}
+        </View>
+      </View>
+    );
+  };
   const renderVisitorItem = ({ item: visitor }: { item: VisitorScan }) => (
     <View style={styles.visitorItem}>
       <View style={styles.userInfo}>
@@ -195,11 +267,7 @@ export default function HistoryScreen() {
   );
 
   if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.loadingText}>Loading visitor data...</Text>
-      </View>
-    );
+    return <SkeletonLoader />;
   }
 
   if (filteredScans.length === 0) {
@@ -556,5 +624,79 @@ const styles = StyleSheet.create({
   },
   selectedFilterOptionText: {
     color: '#FFFFFF',
+  },
+  // Skeleton styles
+  skeletonHeaderTitle: {
+    width: 200,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 20,
+  },
+  skeletonStatIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#E5E7EB',
+  },
+  skeletonStatNumber: {
+    width: 40,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginTop: 8,
+  },
+  skeletonStatLabel: {
+    width: 60,
+    height: 12,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginTop: 4,
+  },
+  skeletonSectionTitle: {
+    width: 150,
+    height: 18,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+  },
+  skeletonFilterText: {
+    width: 80,
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+  },
+  skeletonUserName: {
+    width: 120,
+    height: 16,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+  },
+  skeletonUserEmail: {
+    width: 160,
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginTop: 2,
+  },
+  skeletonVisitorType: {
+    width: 100,
+    height: 12,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginTop: 2,
+  },
+  skeletonStatRow: {
+    width: 60,
+    height: 12,
+    borderRadius: 4,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 2,
+  },
+  skeletonBadgeStatus: {
+    width: 80,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: '#E5E7EB',
+    marginTop: 4,
   },
 });
