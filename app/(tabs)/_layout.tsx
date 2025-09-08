@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Camera, History, BarChart3 } from 'lucide-react-native';
+import { Camera, History, ChartBar as BarChart3 } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
