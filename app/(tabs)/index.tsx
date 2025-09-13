@@ -70,6 +70,7 @@ export default function ScannerScreen() {
     }
 
     try {
+    try {
       // Search for visitor across all tables
       const visitor = await findVisitorByQRCode(data);
       
@@ -91,6 +92,15 @@ export default function ScannerScreen() {
           today_scans: 0,
           last_scan: '',
         });
+      }
+    } catch (error) {
+      console.error('Error processing QR code:', error);
+      if (!didCancelRef.current) {
+        Alert.alert(
+          'Scanning Error', 
+          'Failed to process QR code. Please ensure the code is clear and try again.',
+          [{ text: 'OK', onPress: resetScanner }]
+        );
       }
     } catch (error) {
       console.error('Error processing QR code:', error);
