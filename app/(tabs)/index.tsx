@@ -7,9 +7,9 @@ import { ScannerOverlay } from '@/components/ScannerOverlay';
 import { BarcodeScanning } from '@/components/BarcodeScanning';
 import { Scan, RotateCcw, Users, ChevronDown } from 'lucide-react-native';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-export default function ScannerScreen() {
+function ScannerScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedData, setScannedData] = useState<string | null>(null);
@@ -381,3 +381,5 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
 });
+
+export default ScannerScreen;

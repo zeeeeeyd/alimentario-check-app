@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, ScrollV
 import { VisitorWithScans, VISITOR_TYPES, updateBadgeDownloaded, getVisitorScanStats } from '@/lib/supabase';
 import { X, User, Mail, Phone, Calendar, Building, MapPin, Badge, Download, ChartBar as BarChart3, Clock } from 'lucide-react-native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface UserInfoCardProps {
   visitor: VisitorWithScans;
