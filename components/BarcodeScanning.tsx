@@ -34,19 +34,21 @@ export function BarcodeScanning({
       </View>
     );
   }
+
   return (
-    <CameraView
-      style={[styles.camera, style]}
-      facing={facing}
-      onBarcodeScanned={handleBarcodeScanned}
-      barCodeScannerSettings={{
-        barCodeTypes: ['qr'],
-      }}
-      enableTorch={false}
-      zoom={0}
-    >
+    <View style={[styles.camera, style]}>
+      <CameraView
+        style={StyleSheet.absoluteFillObject}
+        facing={facing}
+        onBarcodeScanned={handleBarcodeScanned}
+        barCodeScannerSettings={{
+          barCodeTypes: ['qr'],
+        }}
+        enableTorch={false}
+        zoom={0}
+      />
       {children}
-    </CameraView>
+    </View>
   );
 }
 
