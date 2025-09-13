@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, Dimensions, Modal, ScrollView } from 'react-native';
-import { Camera, CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraType, useCameraPermissions } from 'expo-camera';
 import { findVisitorByQRCode, VisitorWithScans, VISITOR_TYPES, VisitorType } from '@/lib/supabase';
 import { UserInfoCard } from '@/components/UserInfoCard';
 import { ScannerOverlay } from '@/components/ScannerOverlay';
+import { BarcodeScanning } from '@/components/BarcodeScanning';
 import { Scan, RotateCcw, Users, ChevronDown } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
@@ -128,13 +129,11 @@ export default function ScannerScreen() {
         </TouchableOpacity>
       </View>
 
-      <CameraView
-        style={styles.camera}
+      <BarcodeScanning
         facing={facing}
-        onBarcodeScanned={scannerActive ? handleBarcodeScanned : undefined}
-        barCodeScannerSettings={{
-          barCodeTypes: ['qr'],
-        }}
+        onBarcodeScanned={handleBarcodeScanned}
+        scannerActive={scannerActive}
+        style={styles.camera}
       >
         <ScannerOverlay isProcessing={isProcessing} />
         
@@ -146,7 +145,7 @@ export default function ScannerScreen() {
             <RotateCcw size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
-      </CameraView>
+      </BarcodeScanning>
 
       <View style={styles.footer}>
         <Scan size={32} color="#16A34A" />
