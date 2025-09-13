@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { CameraView, CameraType } from 'expo-camera';
 
 interface BarcodeScanningProps {
@@ -17,14 +17,25 @@ export function BarcodeScanning({
   style,
   children 
 }: BarcodeScanningProps) {
+  const handleBarcodeScanned = React.useCallback(
+    ({ data }: { data: string }) => {
+      if (scannerActive && data) {
+        onBarcodeScanned({ data });
+      }
+    },
+    [scannerActive, onBarcodeScanned]
+  );
+
   return (
     <CameraView
       style={[styles.camera, style]}
       facing={facing}
-      onBarcodeScanned={scannerActive ? onBarcodeScanned : undefined}
+      onBarcodeScanned={handleBarcodeScanned}
       barCodeScannerSettings={{
         barCodeTypes: ['qr'],
       }}
+      enableTorch={false}
+      zoom={0}
     >
       {children}
     </CameraView>

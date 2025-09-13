@@ -18,6 +18,8 @@ export default function ScannerScreen() {
   const [scannerActive, setScannerActive] = useState(true);
   const [selectedVisitorType, setSelectedVisitorType] = useState<VisitorType>('visitors');
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [lastScannedCode, setLastScannedCode] = useState<string>('');
+  const [scanCooldown, setScanCooldown] = useState(false);
 
   const didCancelRef = React.useRef(false);
 
@@ -42,12 +44,28 @@ export default function ScannerScreen() {
   }
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
-    if (isProcessing || !scannerActive) return;
+    // Prevent duplicate scans and ensure minimum time between scans
+    if (isProcessing || !scannerActive || scanCooldown || data === lastScannedCode) return;
+    
+    // Validate QR code format (basic validation)
+    if (!data || data.trim().length === 0) {
+      console.log('Invalid QR code: empty or whitespace');
+      return;
+    }
     
     if (!didCancelRef.current) {
       setIsProcessing(true);
       setScannerActive(false);
+      setScanCooldown(true);
       setScannedData(data);
+      setLastScannedCode(data);
+      
+      // Set cooldown period to prevent rapid successive scans
+      setTimeout(() => {
+        if (!didCancelRef.current) {
+          setScanCooldown(false);
+        }
+      }, 1000);
     }
 
     try {
@@ -75,7 +93,29 @@ export default function ScannerScreen() {
       }
     } catch (error) {
       console.error('Error processing QR code:', error);
-      Alert.alert('Error', 'Failed to process QR code. Please try again.');
+      if (!didCancelRef.current) {
+        Alert.alert(
+          'Scanning Error', 
+          'Failed to process QR code. Please ensure the code is clear and try again.',
+          [{ text: 'OK', onPress: resetScanner }]
+        );
+      }
+    } finally {
+      if (!didCancelRef.current) {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  const resetScanner = () => {
+    if (!didCancelRef.current) {
+      setScannedData(null);
+      setVisitorInfo(null);
+      setLastScannedCode('');
+      setScannerActive(true);
+      setScanCooldown(false);
+    }
+  };
       if (!didCancelRef.current) {
         resetScanner();
       }

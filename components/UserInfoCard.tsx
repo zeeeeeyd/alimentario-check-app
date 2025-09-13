@@ -59,9 +59,15 @@ export function UserInfoCard({ visitor, onClose }: UserInfoCardProps) {
   const handleDownloadBadge = async () => {
     if (isNewUser || badgeDownloaded) return;
     
-    const success = await updateBadgeDownloaded(visitor.visitor_type, visitor.id);
-    if (success && !didCancelRef.current) {
-      setBadgeDownloaded(true);
+    try {
+      const success = await updateBadgeDownloaded(visitor.visitor_type, visitor.id);
+      if (success && !didCancelRef.current) {
+        setBadgeDownloaded(true);
+      } else if (!didCancelRef.current) {
+        console.error('Failed to update badge status');
+      }
+    } catch (error) {
+      console.error('Error updating badge status:', error);
     }
   };
 
