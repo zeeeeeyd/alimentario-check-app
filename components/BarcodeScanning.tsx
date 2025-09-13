@@ -26,6 +26,14 @@ export function BarcodeScanning({
     [scannerActive, onBarcodeScanned]
   );
 
+  // Don't render camera if scanner is not active
+  if (!scannerActive) {
+    return (
+      <View style={[styles.camera, style, { backgroundColor: '#000000' }]}>
+        {children}
+      </View>
+    );
+  }
   return (
     <CameraView
       style={[styles.camera, style]}

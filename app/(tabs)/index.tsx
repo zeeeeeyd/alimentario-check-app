@@ -132,6 +132,8 @@ export default function ScannerScreen() {
   if (visitorInfo) {
     return (
       <View style={styles.container}>
+        {/* Hide camera completely when showing visitor info */}
+        <View style={styles.hiddenCamera} />
         <UserInfoCard visitor={visitorInfo} onClose={resetScanner} />
       </View>
     );
@@ -156,7 +158,7 @@ export default function ScannerScreen() {
       <BarcodeScanning
         facing={facing}
         onBarcodeScanned={handleBarcodeScanned}
-        scannerActive={scannerActive}
+        scannerActive={scannerActive && !visitorInfo}
         style={styles.camera}
       >
         <ScannerOverlay isProcessing={isProcessing} />
@@ -368,5 +370,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  hiddenCamera: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000',
+    zIndex: -1,
   },
 });
