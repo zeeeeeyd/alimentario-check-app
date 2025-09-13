@@ -28,6 +28,7 @@ export default function ScannerScreen() {
       didCancelRef.current = true;
     };
   }, []);
+  
   if (!permission) {
     return <View style={styles.container} />;
   }
@@ -114,23 +115,6 @@ export default function ScannerScreen() {
       setLastScannedCode('');
       setScannerActive(true);
       setScanCooldown(false);
-    }
-  };
-      if (!didCancelRef.current) {
-        resetScanner();
-      }
-    } finally {
-      if (!didCancelRef.current) {
-        setIsProcessing(false);
-      }
-    }
-  };
-
-  const resetScanner = () => {
-    if (!didCancelRef.current) {
-      setScannedData(null);
-      setVisitorInfo(null);
-      setScannerActive(true);
     }
   };
 
