@@ -12,6 +12,7 @@ const { width } = Dimensions.get('window');
 function ScannerScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
+  const [cameraActive, setCameraActive] = useState(true);
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [visitorInfo, setVisitorInfo] = useState<VisitorWithScans | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -57,6 +58,7 @@ function ScannerScreen() {
     if (!didCancelRef.current) {
       setIsProcessing(true);
       setScannerActive(false);
+      setCameraActive(false);
       setScanCooldown(true);
       setScannedData(data);
       setLastScannedCode(data);
@@ -114,6 +116,7 @@ function ScannerScreen() {
       setVisitorInfo(null);
       setLastScannedCode('');
       setScannerActive(true);
+      setCameraActive(true);
       setScanCooldown(false);
     }
   };
@@ -132,8 +135,6 @@ function ScannerScreen() {
   if (visitorInfo) {
     return (
       <View style={styles.container}>
-        {/* Hide camera completely when showing visitor info */}
-        <View style={styles.hiddenCamera} />
         <UserInfoCard visitor={visitorInfo} onClose={resetScanner} />
       </View>
     );
@@ -155,23 +156,27 @@ function ScannerScreen() {
         </TouchableOpacity>
       </View>
 
-      <BarcodeScanning
-        facing={facing}
-        onBarcodeScanned={handleBarcodeScanned}
-        scannerActive={scannerActive && !visitorInfo}
-        style={styles.camera}
-      >
-        <ScannerOverlay isProcessing={isProcessing} />
-        
-        <View style={styles.controls}>
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={toggleCameraFacing}
-          >
-            <RotateCcw size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </BarcodeScanning>
+      {cameraActive ? (
+        <BarcodeScanning
+          facing={facing}
+          onBarcodeScanned={handleBarcodeScanned}
+          scannerActive={scannerActive}
+          style={styles.camera}
+        >
+          <ScannerOverlay isProcessing={isProcessing} />
+          
+          <View style={styles.controls}>
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={toggleCameraFacing}
+            >
+              <RotateCcw size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </BarcodeScanning>
+      ) : (
+        <View style={styles.camera} />
+      )}
 
       <View style={styles.footer}>
         <Scan size={32} color="#16A34A" />
@@ -370,15 +375,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  hiddenCamera: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#000000',
-    zIndex: -1,
   },
 });
 
