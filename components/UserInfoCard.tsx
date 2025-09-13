@@ -294,8 +294,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    width: width - 20,
-    maxHeight: '90%',
+    width: width - 40,
+    height: height * 0.8,
+    maxHeight: height * 0.8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
@@ -353,7 +354,8 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   content: {
-    padding: 24,
+    flex: 1,
+    paddingHorizontal: 24,
   },
   section: {
     marginBottom: 24,
@@ -480,6 +482,8 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 0,
     gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
   },
   downloadButton: {
     backgroundColor: '#16A34A',
