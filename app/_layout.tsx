@@ -100,6 +100,7 @@ function AppContent() {
 }
 
 export default function RootLayout() {
+  useFrameworkReady();
   return (
     <ErrorBoundary>
       <AppContent />
