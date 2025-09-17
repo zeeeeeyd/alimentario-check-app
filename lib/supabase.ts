@@ -244,7 +244,12 @@ async function retryOperation<T>(
       }
       
       // Don't retry on certain types of errors
-      if (error.code === 'PGRST301' || error.code === '23505') {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as any).code === 'PGRST301' || (error as any).code === '23505'
+      ) {
         break;
       }
       
@@ -350,8 +355,12 @@ export async function findVisitorByQRCode(qrCode: string): Promise<VisitorWithSc
     if (error instanceof DatabaseError) {
       throw error;
     }
+    let errorMessage = 'Unknown error';
+    if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
+      errorMessage = (error as any).message;
+    }
     throw new DatabaseError(
-      `Failed to search for visitor: ${error.message}`,
+      `Failed to search for visitor: ${errorMessage}`,
       undefined,
       error
     );
@@ -485,8 +494,13 @@ export async function updateBadgeDownloaded(visitorType: VisitorType, id: string
       throw error;
     }
     
+    const errorMessage =
+      error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string'
+        ? (error as any).message
+        : String(error);
+
     throw new DatabaseError(
-      `Failed to update badge status: ${error.message}`,
+      `Failed to update badge status: ${errorMessage}`,
       undefined,
       error
     );
@@ -583,7 +597,11 @@ export async function getDatabaseHealth(): Promise<{
 
   } catch (error) {
     overallHealth = false;
-    healthError = `Database health check failed: ${error.message}`;
+    healthError =
+      'Database health check failed: ' +
+      (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string'
+        ? (error as any).message
+        : String(error));
   }
 
   return {

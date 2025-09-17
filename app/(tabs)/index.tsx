@@ -25,7 +25,7 @@ function ScannerScreen() {
   const [retryCount, setRetryCount] = useState(0);
 
   const didCancelRef = React.useRef(false);
-  const processingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const processingTimeoutRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     return () => {
