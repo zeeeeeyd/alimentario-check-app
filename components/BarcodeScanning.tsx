@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { CameraView, CameraType, BarcodeScanningResult } from 'expo-camera';
 
 interface BarcodeScanningProps {
@@ -32,12 +32,14 @@ export function BarcodeScanning({
     setCameraError('Camera error occurred');
     setCameraReady(false);
     
-    // Show user-friendly error message
-    Alert.alert(
-      'Camera Error',
-      'There was an issue with the camera. Please restart the app or check camera permissions.',
-      [{ text: 'OK' }]
-    );
+    // Show user-friendly error message (only on native platforms)
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Camera Error',
+        'There was an issue with the camera. Please restart the app or check camera permissions.',
+        [{ text: 'OK' }]
+      );
+    }
   }, []);
 
   const handleBarcodeScanned = React.useCallback(

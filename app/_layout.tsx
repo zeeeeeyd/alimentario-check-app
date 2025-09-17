@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { testDatabaseConnection, getDatabaseHealth } from '@/lib/supabase';
+import 'react-native-url-polyfill/auto';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -21,6 +22,11 @@ function AppContent() {
 
     const initializeApp = async () => {
       try {
+        // Add small delay for native platforms to ensure proper initialization
+        if (Platform.OS !== 'web') {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         // Test database connection
         console.log('Testing database connection...');
         const isConnected = await testDatabaseConnection();

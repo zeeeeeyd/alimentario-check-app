@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "alimentario-checkin",
-    "slug": "bolt-expo-nativewind",
+    "name": "Alimentario Check-in",
+    "slug": "alimentario-checkin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1738239252/alimentario/WhatsApp_Image_2025-01-30_at_13.12.59_0d05ac7c_iu17hi.jpg",
@@ -36,8 +36,15 @@
       }
     },
     "android": {
-      "package": "com.zeyd.boltexponativewind"
+      "package": "com.alimentario.checkin",
+      "adaptiveIcon": {
+        "foregroundImage": "https://res.cloudinary.com/dxn9h9afz/image/upload/v1738239252/alimentario/WhatsApp_Image_2025-01-30_at_13.12.59_0d05ac7c_iu17hi.jpg",
+        "backgroundColor": "#16A34A"
+      }
     },
-    "owner": "zeyd"
+    "owner": "zeyd",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
