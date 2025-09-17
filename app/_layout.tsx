@@ -1,30 +1,143 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { View, Text, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { testDatabaseConnection, getDatabaseHealth } from '@/lib/supabase';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function AppContent() {
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useFrameworkReady();
 
   useEffect(() => {
-    // Hide splash screen after a short delay
-    const timer = setTimeout(() => {
-      SplashScreen.hideAsync();
-    }, 2000);
+    let mounted = true;
 
-    return () => clearTimeout(timer);
+    const initializeApp = async () => {
+      try {
+        // Test database connection
+        console.log('Testing database connection...');
+        const isConnected = await testDatabaseConnection();
+        
+        if (!isConnected) {
+          throw new Error('Failed to connect to database');
+        }
+
+        // Check database health
+        const health = await getDatabaseHealth();
+        if (!health.isHealthy) {
+          console.warn('Database health check failed:', health);
+          // Don't throw here, just log the warning
+        }
+
+        console.log('Database connection successful');
+
+        // Add a small delay to ensure smooth transition
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        if (mounted) {
+          setIsReady(true);
+          // Hide splash screen
+          await SplashScreen.hideAsync();
+        }
+      } catch (error) {
+        console.error('App initialization error:', error);
+        if (mounted) {
+          setError(error instanceof Error ? error.message : 'Failed to initialize app');
+          await SplashScreen.hideAsync();
+        }
+      }
+    };
+
+    initializeApp();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>Initialization Error</Text>
+        <Text style={styles.errorMessage}>{error}</Text>
+        <Text style={styles.errorSubtext}>
+          Please check your internet connection and restart the app.
+        </Text>
+      </View>
+    );
+  }
+
+  if (!isReady) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
     </>
   );
 }
+
+export default function RootLayout() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#DC2626',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#374151',
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+});

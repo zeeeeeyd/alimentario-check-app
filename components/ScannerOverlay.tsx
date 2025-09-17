@@ -11,29 +11,71 @@ interface ScannerOverlayProps {
 
 export function ScannerOverlay({ isProcessing }: ScannerOverlayProps) {
   const animatedValue = new Animated.Value(0);
+  const pulseAnimation = new Animated.Value(1);
+  const rotateAnimation = new Animated.Value(0);
 
   React.useEffect(() => {
-    const animate = () => {
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]).start(animate);
-    };
+    let scanAnimation: Animated.CompositeAnimation | null = null;
+    let pulseAnimationRef: Animated.CompositeAnimation | null = null;
+    let rotateAnimationRef: Animated.CompositeAnimation | null = null;
 
     if (!isProcessing) {
-      animate();
+      // Scanning line animation
+      scanAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animatedValue, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      scanAnimation.start();
+
+      // Corner pulse animation
+      pulseAnimationRef = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnimation, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnimation, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimationRef.start();
+    } else {
+      // Processing rotation animation
+      rotateAnimationRef = Animated.loop(
+        Animated.timing(rotateAnimation, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        })
+      );
+      rotateAnimationRef.start();
     }
 
-    return () => animatedValue.stopAnimation();
+    return () => {
+      scanAnimation?.stop();
+      pulseAnimationRef?.stop();
+      rotateAnimationRef?.stop();
+    };
   }, [isProcessing]);
+
+  const rotation = rotateAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
     <View style={styles.overlay}>
@@ -48,11 +90,35 @@ export function ScannerOverlay({ isProcessing }: ScannerOverlayProps) {
         {/* Scanner area */}
         <View style={styles.scannerContainer}>
           <View style={styles.scannerFrame}>
-            {/* Corner indicators */}
-            <View style={[styles.corner, styles.topLeft]} />
-            <View style={[styles.corner, styles.topRight]} />
-            <View style={[styles.corner, styles.bottomLeft]} />
-            <View style={[styles.corner, styles.bottomRight]} />
+            {/* Corner indicators with pulse animation */}
+            <Animated.View 
+              style={[
+                styles.corner, 
+                styles.topLeft,
+                { transform: [{ scale: pulseAnimation }] }
+              ]} 
+            />
+            <Animated.View 
+              style={[
+                styles.corner, 
+                styles.topRight,
+                { transform: [{ scale: pulseAnimation }] }
+              ]} 
+            />
+            <Animated.View 
+              style={[
+                styles.corner, 
+                styles.bottomLeft,
+                { transform: [{ scale: pulseAnimation }] }
+              ]} 
+            />
+            <Animated.View 
+              style={[
+                styles.corner, 
+                styles.bottomRight,
+                { transform: [{ scale: pulseAnimation }] }
+              ]} 
+            />
             
             {/* Scanning line */}
             {!isProcessing && (
@@ -72,11 +138,63 @@ export function ScannerOverlay({ isProcessing }: ScannerOverlayProps) {
                 ]}
               />
             )}
+
+            {/* Processing indicator */}
+            {isProcessing && (
+              <View style={styles.processingContainer}>
+                <Animated.View
+                  style={[
+                    styles.processingSpinner,
+                    { transform: [{ rotate: rotation }] }
+                  ]}
+                />
+                <View style={styles.processingDots}>
+                  <Animated.View 
+                    style={[
+                      styles.processingDot,
+                      styles.dot1,
+                      { opacity: animatedValue }
+                    ]} 
+                  />
+                  <Animated.View 
+                    style={[
+                      styles.processingDot,
+                      styles.dot2,
+                      { 
+                        opacity: animatedValue.interpolate({
+                          inputRange: [0, 0.5, 1],
+                          outputRange: [0.3, 1, 0.3],
+                        })
+                      }
+                    ]} 
+                  />
+                  <Animated.View 
+                    style={[
+                      styles.processingDot,
+                      styles.dot3,
+                      { 
+                        opacity: animatedValue.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 0],
+                        })
+                      }
+                    ]} 
+                  />
+                </View>
+              </View>
+            )}
           </View>
           
-          <Text style={styles.scannerText}>
-            {isProcessing ? 'Processing...' : 'Position QR code in the frame'}
-          </Text>
+          <View style={styles.instructionContainer}>
+            <Text style={styles.scannerText}>
+              {isProcessing ? 'Processing QR Code...' : 'Position QR code within the frame'}
+            </Text>
+            {!isProcessing && (
+              <Text style={styles.scannerSubtext}>
+                Make sure the code is clear and well-lit
+              </Text>
+            )}
+          </View>
         </View>
         
         {/* Right overlay */}
@@ -114,6 +232,8 @@ const styles = StyleSheet.create({
     width: SCANNER_SIZE - 40,
     height: SCANNER_SIZE - 40,
     position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   corner: {
     position: 'absolute',
@@ -158,12 +278,67 @@ const styles = StyleSheet.create({
     backgroundColor: '#16A34A',
     opacity: 0.8,
     borderRadius: 2,
+    shadowColor: '#16A34A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+  },
+  processingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  processingSpinner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: 'transparent',
+    borderTopColor: '#16A34A',
+    borderRightColor: '#16A34A',
+    marginBottom: 16,
+  },
+  processingDots: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  processingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
+  dot1: {
+    opacity: 0.4,
+  },
+  dot2: {
+    opacity: 0.7,
+  },
+  dot3: {
+    opacity: 1,
+  },
+  instructionContainer: {
+    marginTop: 20,
+    alignItems: 'center',
   },
   scannerText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '600',
     textAlign: 'center',
-    marginTop: 20,
     paddingHorizontal: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  scannerSubtext: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+    opacity: 0.8,
+    paddingHorizontal: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
