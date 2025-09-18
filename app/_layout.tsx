@@ -1,3 +1,4 @@
+// ✅ MUST be before any other imports that might use fetch/URL/crypto
 import 'react-native-url-polyfill/auto';
 import 'react-native-get-random-values';
 
@@ -18,8 +19,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { testDatabaseConnection, getDatabaseHealth } from '@/lib/supabase';
-import 'react-native-url-polyfill/auto';
+import { testDatabaseConnection, getDatabaseHealth, isSupabaseConfigured, getSupabase } from '@/lib/supabase';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -35,9 +35,23 @@ function AppContent() {
 
     const initializeApp = async () => {
       try {
+        // Check if Supabase is configured before proceeding
+        if (!isSupabaseConfigured) {
+          throw new Error('Supabase is not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in app.config.js');
+        }
+
         // Add small delay for native platforms to ensure proper initialization
         if (Platform.OS !== 'web') {
           await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // Quick Supabase ping test
+        try {
+          const supabase = getSupabase();
+          const { data, error } = await supabase.from('visitors').select('*').limit(1);
+          console.log('Supabase ping:', { ok: !error, error: error?.message, rowCount: data?.length ?? 0 });
+        } catch (pingError) {
+          console.warn('Supabase ping failed (non-critical):', pingError);
         }
 
         // Test database connection
@@ -80,6 +94,18 @@ function AppContent() {
       mounted = false;
     };
   }, []);
+
+  // Guard against unconfigured Supabase
+  if (!isSupabaseConfigured) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>Configuration Required</Text>
+        <Text style={styles.errorMessage}>
+          Supabase is not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in app.config.js and rebuild the app.
+        </Text>
+      </View>
+    );
+  }
 
   if (error) {
     return (
