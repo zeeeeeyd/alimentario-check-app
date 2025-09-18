@@ -1,3 +1,17 @@
+// ✅ MUST be before any other imports that might use fetch/URL/crypto
+import 'react-native-url-polyfill/auto';
+import 'react-native-get-random-values';
+
+import { decode, encode } from 'base-64';
+if (typeof atob === 'undefined') {
+  // @ts-ignore
+  global.atob = decode;
+}
+if (typeof btoa === 'undefined') {
+  // @ts-ignore
+  global.btoa = encode;
+}
+
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, ScrollView } from 'react-native';
 import { VisitorWithScans, VISITOR_TYPES, updateBadgeDownloaded, getVisitorScanStats } from '@/lib/supabase';

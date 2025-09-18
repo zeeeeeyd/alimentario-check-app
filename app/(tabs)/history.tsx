@@ -1,3 +1,17 @@
+// ✅ MUST be before any other imports that might use fetch/URL/crypto
+import 'react-native-url-polyfill/auto';
+import 'react-native-get-random-values';
+
+import { decode, encode } from 'base-64';
+if (typeof atob === 'undefined') {
+  // @ts-ignore
+  global.atob = decode;
+}
+if (typeof btoa === 'undefined') {
+  // @ts-ignore
+  global.btoa = encode;
+}
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Animated } from 'react-native';

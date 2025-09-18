@@ -1,3 +1,16 @@
+import 'react-native-url-polyfill/auto';
+import 'react-native-get-random-values';
+
+import { decode, encode } from 'base-64';
+if (typeof atob === 'undefined') {
+  // @ts-ignore
+  global.atob = decode;
+}
+if (typeof btoa === 'undefined') {
+  // @ts-ignore
+  global.btoa = encode;
+}
+
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
