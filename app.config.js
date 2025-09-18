@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIs
 export default {
   expo: {
     name: 'Alimentario Check-in',
-    slug: 'bolt-expo-nativewind',               // ← must match the linked EAS project
+    slug: 'alimentario-checkin',
     version: '1.0.0',
     orientation: 'portrait',
     icon: 'https://res.cloudinary.com/dxn9h9afz/image/upload/v1758221463/Eventor/Fichier_77_iyegjn.png',
